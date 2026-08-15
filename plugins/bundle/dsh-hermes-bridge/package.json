@@ -1,6 +1,6 @@
 {
   "name": "dsh-hermes-bridge",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "DeepSeek Harness <-> Hermes Agent integration: call_hermes tool + hd-events event-driven monitoring (staleness detection via webhook)",
   "type": "module",
   "main": "hermes-bridge.js",
