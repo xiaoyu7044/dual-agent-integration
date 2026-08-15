@@ -5,7 +5,7 @@
  * 事件 → POST Hermes webhook（X-Hub-Signature-256 HMAC 签名）→ 直推用户（零 LLM 成本）。
  * 优化（0.2.0）：修复重复 find、阈值参数化、notify 重试（3 次）、单实例锁（web+headless 防重复告警）。
  */
-import { watch, readFileSync, writeFileSync, existsSync, unlinkSync } from 'node:fs';
+import { watch, readFileSync, writeFileSync, existsSync, unlinkSync, statSync } from 'node:fs';
 import { createHmac } from 'node:crypto';
 import { homedir } from 'node:os';
 export const name = 'hd-events';
@@ -52,7 +52,12 @@ export function apply(ctx) {
         console.log('[hd-events] 已有实例在运行（单实例锁），跳过');
         return;
     }
+    // a. 启动时以缓存文件 mtime 为基准（HD 长时间空闲也能检测），并留一个阈值窗口避免启动即误报
     let lastActive = 0;
+    try {
+        lastActive = Math.max(statSync(CACHE).mtimeMs, Date.now() - STALL_MIN * 60000);
+    }
+    catch { /* 文件不存在：从 0 开始 */ }
     let stalledNotified = false;
     // notify 重试：最多 tries 次（失败重发，网络抖动兜底）
     const post = (url, body, sig, event, tries) => fetch(url, {
@@ -74,6 +79,11 @@ export function apply(ctx) {
         const w = watch(CACHE, () => {
             lastActive = Date.now();
             stalledNotified = false;
+        });
+        // b. watch 出错（文件被删/权限变化）→ 告警，监控失守不静默
+        w.on('error', (e) => {
+            console.log('[hd-events] watch 错误:', String(e).slice(0, 200));
+            notify('hd_watch_error', 'HD 会话监控监听失效（watch error），请检查缓存文件');
         });
         const timer = setInterval(() => {
             if (lastActive > 0 && !stalledNotified) {

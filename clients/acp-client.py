@@ -13,6 +13,7 @@ from acp.interfaces import Client
 class MyClient(Client):
     def __init__(self):
         self.replies = []
+        self._msg_event = asyncio.Event()  # 收到回复流时置位（事件驱动等待）
     async def session_update(self, session_id, update, **kwargs):
         # 诊断：打印所有通知类型
         utype = getattr(update, 'session_update', type(update).__name__)
@@ -29,6 +30,7 @@ class MyClient(Client):
             text = getattr(content, 'text', '') or ''
         if text.strip():
             self.replies.append(text.strip())
+            self._msg_event.set()
         elif utype in ('agent_message_chunk', 'agent_thought_chunk'):
             pass  # 无文本块（忽略）
     async def request_permission(self, **kw): return None
@@ -54,8 +56,11 @@ async def main():
     from acp.schema import TextContentBlock
     resp = await conn.prompt(session_id=sess.session_id, prompt=[TextContentBlock(type='text', text=task)])
     print('✓ 任务完成 (stopReason:', resp.stop_reason, ')', flush=True)
-    # 等异步 session/update 通知到达
-    await asyncio.sleep(3)
+    # 事件驱动等回复流：收到即返回，10s 超时兜底（替代固定 sleep）
+    try:
+        await asyncio.wait_for(client._msg_event.wait(), timeout=10)
+    except asyncio.TimeoutError:
+        pass
     print('--- 回复内容 ---', flush=True)
     if client.replies:
         print(''.join(client.replies).strip()[:3000], flush=True)
