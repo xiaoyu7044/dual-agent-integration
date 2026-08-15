@@ -86,3 +86,12 @@ MIT
 3. 对方只做它擅长的（独立复核/并行探索），最小上下文 prompt
 4. Headless 短任务控制上下文，不读无关内容
 
+
+### 开发过程踩坑（构建本方案时的实际经历）
+
+- **GitHub 登录**：Browserbase 无头浏览器过 GitHub 设备验证页不稳定（页面反复丢失）→ 改用 **gh CLI 设备码流程**（用户浏览器输一次码，命令行全搞定）
+- **gh CLI 安装**：官方 release 直连下载失败（网络）→ 用 **ghfast.top 镜像**（或 apt）
+- **DSH headless 嵌套调用**：HD 的 headless 任务跑"python 客户端 → spawn hermes acp"多层嵌套容易卡死（无 TTY）→ 改用 **web 会话（3080）指挥**或拆层验证
+- **DSH 插件 schema 坑**：defineTool 的 `parameters` 必须 `type:'object'` + `properties` + `required:[...]` 数组（`required:true` 写在字段里会导致会话 INVALID_REQUEST）
+- **esbuild 拉取失败**（npm 网络）→ 用 DSH 自带 `node_modules/.bin/tsc --ignoreConfig` 编译 .ts → .js
+- **python ACP 客户端**：必须用 Hermes venv 的解释器跑（默认 python3 与 pydantic_core 编译不匹配）
