@@ -1,0 +1,32 @@
+# 凭据与本地环境（绝不进仓库）
+.env
+*.env
+.env.*
+!*.env.example
+
+# 密钥/凭据
+webhook_secret
+webhook_subscriptions.json
+credentials/
+mem0.json
+mem0.json.bak*
+
+# 本地数据
+*.db
+*.sqlite
+storage/
+storages/
+backups/
+session_projcache.json
+.mem0/
+qdrant/
+
+# Python/Node
+__pycache__/
+*.pyc
+node_modules/
+venv/
+
+# 系统
+.DS_Store
+*.log
