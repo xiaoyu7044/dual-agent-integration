@@ -1,0 +1,5 @@
+- insert:
+    - id: hermes-bridge
+      name: dsh-hermes-bridge
+    - id: hd-events
+      name: dsh-hermes-bridge
