@@ -41,7 +41,7 @@
 - **mem0 + qdrant**（共享记忆，可选）
 
 ## 快速开始
-## 安装 DSH 插件（已发布 npm）```shdsh plugin --profile <名字> add dsh-hermes-bridge   # 一行安装（npm 已发布 @0.1.0）dsh --profile <名字> --dump-config                  # 验证层```
+## 安装 DSH 插件（已发布 npm）```shdsh plugin --profile <名字> add dsh-hermes-bridge   # 一行安装（npm 已发布 @0.3.0，含双会话路由）dsh --profile <名字> --dump-config                  # 验证层```
 
 ```bash
 # 1. 启动 HD 的 ACP 服务器（每次客户端调用时自动 spawn，无需常驻）
