@@ -46,7 +46,7 @@
 ### 安装 DSH 插件（已发布 npm）
 
 ```sh
-dsh plugin --profile <名字> add dsh-hermes-bridge   # 一行安装（npm 已发布 @0.3.1，含双会话路由）
+dsh plugin --profile <名字> add dsh-hermes-bridge   # 一行安装（npm 已发布 @0.3.2，含双会话路由）
 dsh --profile <名字> --dump-config                  # 验证层
 ```
 
@@ -169,7 +169,7 @@ A programmatic integration between **Hermes Agent** (personal AI assistant) and 
 ### Install the DSH plugin (published on npm)
 
 ```sh
-dsh plugin --profile <name> add dsh-hermes-bridge   # one-line install (npm @0.3.1, with dual-session routing)
+dsh plugin --profile <name> add dsh-hermes-bridge   # one-line install (npm @0.3.2, with dual-session routing)
 dsh --profile <name> --dump-config                  # verify layer
 ```
 
