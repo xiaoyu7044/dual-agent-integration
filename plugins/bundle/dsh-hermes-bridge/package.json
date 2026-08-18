@@ -1,10 +1,10 @@
 {
   "name": "dsh-hermes-bridge",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "DeepSeek Harness <-> Hermes Agent integration: call_hermes tool + hd-events event-driven monitoring (staleness detection via webhook)",
   "type": "module",
   "main": "hermes-bridge.js",
-  "files": ["hermes-bridge.js", "hd-events.js", "cordis.patch.yml", "README.md"],
+  "files": ["hermes-bridge.js", "hd-events.js", "cordis.patch.yml", "README.md", "README.en.md"],
   "dsh": { "bundle": { "patch": "./cordis.patch.yml" } },
   "license": "MIT",
   "keywords": ["deepseek-harness", "hermes", "agent", "acp", "cordis"],
