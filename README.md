@@ -53,10 +53,33 @@
 
 # 4. HD 内调用 Hermes（插件）
 #    挂载 plugins/hermes-bridge.ts 到 cordis.patch.yml，会话里用 call_hermes 工具
+#    双会话路由（v0.3.0）：
+#      call_hermes(task="...")                          → 一次性会话（独立短任务）
+#      call_hermes(task="...", session="名称")           → 持久会话（多轮共享上下文）
+#      call_hermes(task="...", session="名称", reset_session=true) → 清空会话开新阶段
 
 # 5. 事件监控（插件）
 #    挂载 plugins/hd-events.ts + 配置 Hermes webhook（hermes webhook subscribe hd-events ...）
 ```
+
+## 双会话路由（call_hermes v0.3.0）
+
+`call_hermes` 借鉴官方 `hermes peer` 的持久会话设计（按名称恢复对端会话、找不到才新建），提供两种会话模式：
+
+| 模式 | 用法 | 适用 | 上下文 |
+|---|---|---|---|
+| 一次性（默认） | `call_hermes(task="...")` | 独立短任务 | 零残留，token 最低 |
+| 持久会话 | `call_hermes(task="...", session="名称")` | 长协作/连续诊断（检查→修复→复验） | 同名单次调用共享上下文 |
+| 重置 | `call_hermes(task="...", session="名称", reset_session=true)` | 同一会话名换新课题 | 先删旧会话再新建 |
+
+**实现机制**：
+- 持久会话 → `hermes chat --continue <名称> --create-if-missing`（按标题恢复，不存在则创建）
+- 重置 → `hermes sessions list` 按标题查 ID → `hermes sessions delete <id> --yes` → 重建同名会话
+
+**验证记录（2026-08-18 实测）**：
+- 对照组：一次性会话问秘密值 → 「不知道」（证明不在 mem0，排除共享记忆干扰）
+- 实验组：`session='bridge-clean'` 两次调用 → 第二次准确回忆 `XJ-778899-2026`（上下文延续铁证）
+- 重置：存 ALPHA-111 → `reset_session=true` 存 BETA-222 → 再问 → 返回 BETA-222（旧上下文已清）
 
 ## 踩坑记录（重要）
 
