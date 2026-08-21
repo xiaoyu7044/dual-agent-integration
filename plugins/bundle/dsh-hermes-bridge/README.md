@@ -12,8 +12,8 @@ DeepSeek Harness ↔ Hermes Agent 互通插件包（DSH bundle）。
 
 | 插件 id | 功能 |
 |---|---|
-| `hermes-bridge` | 注册 `call_hermes` 工具——HD 会话内直接调用 Hermes Agent，**双会话路由**（一次性/持久会话） |
-| `hd-events` | 事件驱动监控——fs.watch 监听 DSH 会话缓存，会话停滞/异常自动 HMAC 签名 POST Hermes webhook（直推用户，零 LLM 成本） |
+| `hermes-bridge` | 注册 `call_hermes` 工具——HD 会话内直接调用 Hermes Agent，**双会话路由**（一次性/持久会话）。v0.4.0：会话匹配容错、调用日志、超长结果头尾保留 |
+| `hd-events` | 事件驱动监控——监听 `~/.dsh/sessions/` 真实会话文件（fs.watch 递归 + 30s 扫描兜底），会话停滞/恢复自动 HMAC 签名 POST Hermes webhook（直推用户，零 LLM 成本）。v0.4.0：修复监听死文件导致的假告警、空闲不误报、双实例幂等保护 |
 
 ## 安装（DSH profile）
 

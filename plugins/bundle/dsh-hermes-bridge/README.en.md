@@ -12,8 +12,8 @@ Lets **HD (DeepSeek Harness)** call **Hermes Agent** (another AI agent) from ins
 
 | Plugin id | Function |
 |---|---|
-| `hermes-bridge` | Registers the `call_hermes` tool — call Hermes Agent from inside an HD session, with **dual-session routing** (one-shot / persistent) |
-| `hd-events` | Event-driven monitoring — fs.watch on the DSH session cache; on stall/anomaly POSTs an HMAC-signed webhook to Hermes (pushes to the user, zero LLM cost) |
+| `hermes-bridge` | Registers the `call_hermes` tool — call Hermes Agent from inside an HD session, with **dual-session routing** (one-shot / persistent). v0.4.0: session-match tolerance, per-call logging, head+tail retention for long results |
+| `hd-events` | Event-driven monitoring — watches the real session store `~/.dsh/sessions/` (recursive fs.watch + 30s scan fallback); on stall/resume POSTs an HMAC-signed webhook to Hermes (pushes to the user, zero LLM cost). v0.4.0: fixed false alarms from a dead file, no false stall when idle, in-process idempotency |
 
 ## Install (DSH profile)
 
