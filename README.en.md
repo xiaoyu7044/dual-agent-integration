@@ -32,8 +32,8 @@ A programmatic integration between **Hermes Agent** (personal AI assistant) and 
 |---|---|
 | `clients/acp-client.py` | **ACP standard client** (python) — bidirectional, runs tasks and collects replies |
 | `clients/acp-client.js` | Node fallback client |
-| `plugins/hermes-bridge.ts` | HD→Hermes plugin: registers `call_hermes` tool (call Hermes from inside an HD session). **Dual-session routing**: default one-shot; `session=<name>` persistent session (shared context across calls); `reset_session=true` clears context for a new phase |
-| `plugins/hd-events.ts` | Event-driven monitoring: fs.watch on DSH session files, posts webhook on stall/anomaly |
+| `plugins/hermes-bridge.ts` | HD→Hermes plugin: registers the `call_hermes` tool (call Hermes directly from HD sessions). **Dual-session routing**: one-shot by default; pass `session=<name>` for persistent sessions (shared context across calls for long collaboration/continuous diagnosis); `reset_session=true` clears context for a fresh phase. **v0.4.0**: session-matching tolerance (truncated titles / titles with spaces), per-call logging (`~/.hermes/logs/call-hermes.log`), long results keep head+tail 4000 chars each |
+| `plugins/hd-events.ts` | Event-driven monitoring plugin: watches the real session store `~/.dsh/sessions/` (recursive fs.watch + 30s scan fallback), posts webhooks on stall/resume. **v0.4.0**: fixed false alarms from watching a dead file, no false stall when idle, in-process idempotency guard against duplicate instances |
 | `scripts/site-watch.sh` | Lightweight fallback monitor (site/HD/qdrant liveness, output only on anomaly) |
 | `skills/dual-agent-workflow.md` | Collaboration protocol skill (relay/duty/knowledge loop/pitfalls) |
 
