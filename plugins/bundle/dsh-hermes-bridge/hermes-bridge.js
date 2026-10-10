@@ -5,6 +5,14 @@
  * 双 agent 协作：HD 干活时可以把任务交给 Hermes（网站部署/服务器运维/mem0/SSH/MC 等）。
  * 安全：execFile 传参数组（无 shell 解释，防命令注入）。
  *
+ * v0.4.1（2026-10-10）：
+ *   - 兼容核实：HD 已升到 0.2.0-rc.2（3080 由全局 npm 包 ~/.npm-global/bin/dsh 驱动），
+ *     插件实测正常加载、call_hermes 工具注册成功
+ *   - hermes 可执行解析加固：HERMES_BIN > ~/.local/bin/hermes > PATH（启动日志打印实际路径）。
+ *     原来裸用 'hermes' 靠 PATH，一旦 systemd user 单元 PATH 变化就静默 ENOENT
+ *   - 依赖接线：只经 ~/.dsh/plugins/hermes-bridge/node_modules（指向全局 dsh 包），
+ *     不再依赖 HD 源码树（该树 2026-10-10 已删除）
+ *
  * v0.4.0 增强（2026-08-21）：
  *   - findSessionId 容错：标题截断（列表 ~20 字符）/含空格也能匹配，ID 取行尾且校验格式
  *   - 调用日志：每次 call_hermes 追加写入 ~/.hermes/logs/call-hermes.log（排障用）
@@ -19,12 +27,22 @@
  */
 import { defineTool } from '@deepseek-ai/dsh-tools';
 import { execFile } from 'node:child_process';
-import { appendFileSync } from 'node:fs';
+import { appendFileSync, existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 export const name = 'hermes-bridge';
 export const inject = ['tools'];
 // 调用日志（排障）：~/.hermes/logs/call-hermes.log
 const LOG_FILE = (process.env.HERMES_HOME || homedir() + '/.hermes') + '/logs/call-hermes.log';
+/** 解析 hermes 可执行路径：HERMES_BIN > ~/.local/bin/hermes > PATH 查找（结果缓存） */
+let hermesBin = null;
+function hermesBinPath() {
+    if (hermesBin)
+        return hermesBin;
+    if (process.env.HERMES_BIN)
+        return (hermesBin = process.env.HERMES_BIN);
+    const local = homedir() + '/.local/bin/hermes';
+    return (hermesBin = existsSync(local) ? local : 'hermes');
+}
 function logCall(entry) {
     try {
         appendFileSync(LOG_FILE, JSON.stringify({ ts: new Date().toISOString(), ...entry }) + '\n');
@@ -44,6 +62,7 @@ export function apply(ctx) {
     ;
     globalThis.__hermesBridgeApplied = true;
     console.log(`[hermes-bridge] 已启动：call_hermes 工具注册（pid ${process.pid}）`);
+    console.log(`[hermes-bridge] hermes 可执行：${hermesBinPath()}`);
     // 并发控制：串行队列（一次只跑一个 call_hermes，避免多任务挤爆 Hermes）
     let queue = Promise.resolve();
     /** 按标题查持久会话的 session ID（不存在返回 null）。
@@ -51,7 +70,7 @@ export function apply(ctx) {
      *  因此用「行内包含完整标题」优先、「标题前 20 字符前缀」兜底，ID 取行尾并校验格式。 */
     function findSessionId(name) {
         return new Promise((resolve) => {
-            execFile((process.env.HERMES_BIN || 'hermes'), ['sessions', 'list', '--limit', '500'], { timeout: 30000, maxBuffer: 8 * 1024 * 1024 }, (_err, stdout) => {
+            execFile(hermesBinPath(), ['sessions', 'list', '--limit', '500'], { timeout: 30000, maxBuffer: 8 * 1024 * 1024 }, (_err, stdout) => {
                 const want = String(name).trim();
                 const wantPrefix = want.slice(0, 20);
                 for (const raw of String(stdout).split('\n')) {
@@ -75,7 +94,7 @@ export function apply(ctx) {
     /** 执行 hermes chat（one-shot 或持久会话） */
     function runHermes(args, timeoutMs) {
         return new Promise((resolve, reject) => {
-            execFile((process.env.HERMES_BIN || 'hermes'), args, { timeout: timeoutMs, maxBuffer: 16 * 1024 * 1024, env: { ...process.env } }, (err, stdout, stderr) => (err ? reject(new Error(String(err.message) + ' | ' + String(stderr).slice(0, 300))) : resolve(stdout)));
+            execFile(hermesBinPath(), args, { timeout: timeoutMs, maxBuffer: 16 * 1024 * 1024, env: { ...process.env } }, (err, stdout, stderr) => (err ? reject(new Error(String(err.message) + ' | ' + String(stderr).slice(0, 300))) : resolve(stdout)));
         });
     }
     ctx.tools.register(defineTool({

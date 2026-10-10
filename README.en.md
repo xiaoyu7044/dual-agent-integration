@@ -12,7 +12,7 @@ A programmatic integration between **Hermes Agent** (personal AI assistant) and 
 
 ```
 ┌─ Hermes Agent ─────────────┐        ┌─ DeepSeek Harness (HD) ─────┐
-│  hermes acp (ACP server)   │        │  pnpm run demo:acp (ACP server) │
+│  hermes acp (ACP server)   │        │  dsh acp (ACP server) │
 │  ──────────────────────    │        │  ─────────────────────────   │
 │  Full skills/memory/tools  │        │  Cordis plugin system        │
 └──────────┬─────────────────┘        └──────────────┬──────────────┘
@@ -32,7 +32,7 @@ A programmatic integration between **Hermes Agent** (personal AI assistant) and 
 |---|---|
 | `clients/acp-client.py` | **ACP standard client** (python) — bidirectional, runs tasks and collects replies |
 | `clients/acp-client.js` | Node fallback client |
-| `plugins/hermes-bridge.ts` | HD→Hermes plugin: registers the `call_hermes` tool (call Hermes directly from HD sessions). **Dual-session routing**: one-shot by default; pass `session=<name>` for persistent sessions (shared context across calls for long collaboration/continuous diagnosis); `reset_session=true` clears context for a fresh phase. **v0.4.0**: session-matching tolerance (truncated titles / titles with spaces), per-call logging (`~/.hermes/logs/call-hermes.log`), long results keep head+tail 4000 chars each |
+| `plugins/hermes-bridge.ts` | HD→Hermes plugin: registers the `call_hermes` tool (call Hermes directly from HD sessions). **Dual-session routing**: one-shot by default; pass `session=<name>` for persistent sessions (shared context across calls for long collaboration/continuous diagnosis); `reset_session=true` clears context for a fresh phase. **v0.4.0**: session-matching tolerance (truncated titles / titles with spaces), per-call logging (`~/.hermes/logs/call-hermes.log`), long results keep head+tail 4000 chars each. **v0.4.1** (2026-10-10): verified against HD 0.2.0-rc.2; `hermes` binary resolution hardened (HERMES_BIN > ~/.local/bin/hermes > PATH); deps resolve via the global dsh package only — no dependency on the HD source tree |
 | `plugins/hd-events.ts` | Event-driven monitoring plugin: watches the real session store `~/.dsh/sessions/` (recursive fs.watch + 30s scan fallback), posts webhooks on stall/resume. **v0.4.0**: fixed false alarms from watching a dead file, no false stall when idle, in-process idempotency guard against duplicate instances |
 | `scripts/site-watch.sh` | Lightweight fallback monitor (site/HD/qdrant liveness, output only on anomaly) |
 | `skills/dual-agent-workflow.md` | Collaboration protocol skill (relay/duty/knowledge loop/pitfalls) |
@@ -40,7 +40,7 @@ A programmatic integration between **Hermes Agent** (personal AI assistant) and 
 ## Dependencies
 
 - **Hermes Agent** (with python `acp` lib: `~/.hermes/hermes-agent/venv/`)
-- **DeepSeek Harness** (`pnpm run demo:acp` provides the ACP server, requires `DEEPSEEK_API_KEY`)
+- **DeepSeek Harness** (`dsh acp` provides the ACP server, requires `DEEPSEEK_API_KEY`)
 - **mem0 + qdrant** (shared memory, optional)
 
 ## Quick Start
@@ -57,7 +57,7 @@ dsh --profile <name> --dump-config                  # verify layer
 ```bash
 # 1. Start HD's ACP server (auto-spawned per client call, no daemon needed)
 # 2. Call HD (ACP standard protocol)
-<venv>/bin/python clients/acp-client.py "pnpm --dir <DSH_REPO> run demo:acp" "your task"
+<venv>/bin/python clients/acp-client.py "pnpm --dir <DSH_REPO> run dsh acp" "your task"
 
 # 3. Call Hermes
 <venv>/bin/python clients/acp-client.py "hermes acp" "your task"

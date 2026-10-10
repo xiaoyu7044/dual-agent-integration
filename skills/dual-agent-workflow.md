@@ -29,8 +29,8 @@ metadata:
 
 | 方向 | 方式 | 命令/工具 |
 |---|---|---|
-| Hermes → HD | headless CLI | `cd /home/li/deepseek-harness && pnpm dsh --profile headless "任务"`（新会话，任务须自包含） |
-| HD → Hermes | `call_hermes` 工具 | HD 会话里调用（hermes-bridge 插件注册，`/home/li/deepseek-harness/examples/hermes-bridge/index.ts`，execFile 调 `/home/li/.local/bin/hermes chat -q`） |
+| Hermes → HD | headless CLI | `dsh --profile headless "任务"`（新会话，任务须自包含） |
+| HD → Hermes | `call_hermes` 工具 | HD 会话里调用（hermes-bridge 插件注册，`/home/li/~/.dsh/plugins/hermes-bridge/index.js`，execFile 调 `/home/li/.local/bin/hermes chat -q`） |
 | 记忆共享 | mem0（qdrant server 6333） | 双向读写同一集合 `hermes_mem0_lijiachuan`（123+ 条）；HD 侧 mem0 工具经 dai-mem0 预设（默认） |
 
 **服务**：HD = `dsh-web.service`（systemd 用户服务，3080，开机自启）；qdrant = `qdrant-server.service`（6333）。
@@ -67,21 +67,21 @@ HD 是会话式（无定时机制），**不能独立巡更**——值班 = 我�
 
 - **HD 经验 → 我的技能**：HD 踩的坑/发现的方案（如 mem0 embedder 坑、Cordis 插件写法）及时 patch 进相关技能（hermes-mem0-local 已含共享章节）
 - **我的经验 → HD**：`~/.hermes/scripts/dsh-skill-sync.sh`（每日 6:00 cron `077c0b3d10ab` 自动拍平同步技能+记忆到 `~/.dsh/skills/`）——改技能后跑 `bash ~/.hermes/scripts/dsh-skill-sync.sh` 可立即同步
-- **HD 插件维护**：hermes-bridge（call_hermes）在 `deepseek-harness/examples/hermes-bridge/`，挂载在 `~/.dsh/profiles/{web,headless}/cordis.patch.yml`（insert 语法：`- insert:\n    - name: '<绝对路径>'`）；patch 修改后 `systemctl --user restart dsh-web` 生效
+- **HD 插件维护**：hermes-bridge（call_hermes）在 `~/.dsh/plugins/hermes-bridge/`，挂载在 `~/.dsh/profiles/{web,headless}/cordis.patch.yml`（insert 语法：`- insert:\n    - name: '<绝对路径>'`）；patch 修改后 `systemctl --user restart dsh-web` 生效
 
 ## 事件驱动监控（方案 A——2026-08-15 落地，替代轮询盯梢）
 
-- **hd-events 插件**（`deepseek-harness/examples/hermes-bridge/hd-events.ts`）：fs.watch 监听 `~/.dsh/storages/session_projcache.json`——HD 干活时文件更新=活跃；20 分钟无更新 → POST Hermes webhook → deliver-only 直推 WeCom（零 LLM 成本）
+- **hd-events 插件**（`~/.dsh/plugins/hermes-bridge/hd-events.js`）：fs.watch 监听 `~/.dsh/sessions/`——HD 干活时文件更新=活跃；20 分钟无更新 → POST Hermes webhook → deliver-only 直推 WeCom（零 LLM 成本）
 - **webhook 平台**：`platforms.webhook`（8644 端口 + 全局 secret `~/.hermes/webhook_secret`）；订阅 `hd-events`（`hermes webhook list` 查看，订阅专属 secret 在 `~/.hermes/webhook_subscriptions.json`）
 - **⚠️ 签名坑**：Hermes webhook 验证用 **`X-Hub-Signature-256: sha256=<hmac>`**（GitHub 风格，不是 X-Hermes-*）——HMAC 用**订阅 secret**（`subs['hd-events']['secret']`），事件类型头 `X-GitHub-Event`；测试 POST：`{"status":"delivered"}`=成功
 - **兜底**：`site-hd-watch.sh`（每 10 分钟 cron 查 主站/3080/6333/停滞）仍保留（webhook 失效时兜底）
 
 ## ACP 程序化 API（方案 B——2026-08-15 落地，标准协议双向互通）
 
-- **HD 侧服务器**：`cd /home/li/deepseek-harness && pnpm run demo:acp`（JSON-RPC stdio，needs key，无客户端连会自动退出）
+- **HD 侧服务器**：`~/.npm-global/bin/dsh && dsh acp`（JSON-RPC stdio，needs key，无客户端连会自动退出）
 - **Hermes 侧服务器**：`hermes acp`（ACP 模式，`--check` 验证依赖）
 - **客户端**（双向通用）：`python3 /home/li/acp-py-client.py "<服务器命令>" "<任务>"`——例：
-  - 调 HD：`python3 acp-py-client.py "/home/li/.npm-global/bin/pnpm --dir /home/li/deepseek-harness run demo:acp" "任务"`
+  - 调 HD：`python3 acp-py-client.py "/home/li/.npm-global/bin//home/li/.npm-global/bin/dsh acp" "任务"`
   - 调 Hermes：`python3 acp-py-client.py "hermes acp" "任务"`
   - Node 版备用：`/home/li/acp-client.js`
 - **协议要点**：ACP v0.11（python 库 `acp` 在 Hermes venv）；方法 `initialize`(protocolVersion=1) → `session/new`(cwd, mcpServers:[]) → `session/prompt`(sessionId, prompt:[{type:'text',text:...}])；**回复文本在 `session/update` 通知**（content 是 dict 或 pydantic 模型，非列表）；**PromptResponse 无 message 字段**

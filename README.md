@@ -12,7 +12,7 @@
 
 ```
 ┌─ Hermes Agent ─────────────┐        ┌─ DeepSeek Harness (HD) ─────┐
-│  hermes acp（ACP 服务器）   │        │  pnpm run demo:acp（ACP 服务器）│
+│  hermes acp（ACP 服务器）   │        │  dsh acp（ACP 服务器）│
 │  ──────────────────────    │        │  ─────────────────────────   │
 │  技能/记忆/工具全能力       │        │  Cordis 插件体系              │
 └──────────┬─────────────────┘        └──────────────┬──────────────┘
@@ -32,7 +32,7 @@
 |---|---|
 | `clients/acp-client.py` | **ACP 标准客户端**（python）——双向通用，跑任务并收回复 |
 | `clients/acp-client.js` | Node 备用客户端 |
-| `plugins/hermes-bridge.ts` | HD→Hermes 插件：注册 `call_hermes` 工具（HD 会话内直接调用 Hermes）。**双会话路由**：默认一次性会话；传 `session=<名>` 用持久会话（同名单次调用共享上下文，长协作/连续诊断）；`reset_session=true` 清空上下文开新阶段。**v0.4.0**：会话匹配容错（标题截断/含空格）、每次调用写日志（`~/.hermes/logs/call-hermes.log`）、超长结果头尾各留 4000 字符 |
+| `plugins/hermes-bridge.ts` | HD→Hermes 插件：注册 `call_hermes` 工具（HD 会话内直接调用 Hermes）。**双会话路由**：默认一次性会话；传 `session=<名>` 用持久会话（同名单次调用共享上下文，长协作/连续诊断）；`reset_session=true` 清空上下文开新阶段。**v0.4.0**：会话匹配容错（标题截断/含空格）、每次调用写日志（`~/.hermes/logs/call-hermes.log`）、超长结果头尾各留 4000 字符。**v0.4.1**（2026-10-10）：兼容 HD 0.2.0-rc.2 实测通过；`hermes` 可执行解析加固（HERMES_BIN > ~/.local/bin/hermes > PATH）；依赖只走全局 dsh 包，不再依赖源码树 |
 | `plugins/hd-events.ts` | 事件驱动监控插件：监听 `~/.dsh/sessions/` 真实会话文件（fs.watch 递归 + 30s 扫描兜底），卡住/恢复自动 POST webhook。**v0.4.0**：修复监听死文件导致的假告警、空闲不误报、同进程双实例幂等保护 |
 | `scripts/site-watch.sh` | 轻量兜底监控（主站/HD/qdrant 存活检查，异常才输出） |
 | `skills/dual-agent-workflow.md` | 协作协议技能（接力/值班/知识闭环/踩坑） |
@@ -40,7 +40,7 @@
 ## 依赖
 
 - **Hermes Agent**（含 python `acp` 库：`~/.hermes/hermes-agent/venv/`）
-- **DeepSeek Harness**（`pnpm run demo:acp` 提供 ACP 服务器，需 `DEEPSEEK_API_KEY`）
+- **DeepSeek Harness**（`dsh acp` 提供 ACP 服务器，需 `DEEPSEEK_API_KEY`）
 - **mem0 + qdrant**（共享记忆，可选）
 
 ## 快速开始
@@ -57,7 +57,7 @@ dsh --profile <名字> --dump-config                  # 验证层
 ```bash
 # 1. 启动 HD 的 ACP 服务器（每次客户端调用时自动 spawn，无需常驻）
 # 2. 调用 HD（ACP 标准协议）
-<venv>/bin/python clients/acp-client.py "pnpm --dir <DSH_REPO> run demo:acp" "你的任务"
+<venv>/bin/python clients/acp-client.py "pnpm --dir <DSH_REPO> run dsh acp" "你的任务"
 
 # 3. 调用 Hermes
 <venv>/bin/python clients/acp-client.py "hermes acp" "你的任务"
