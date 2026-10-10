@@ -57,7 +57,7 @@ dsh --profile <名字> --dump-config                  # 验证层
 ```bash
 # 1. 启动 HD 的 ACP 服务器（每次客户端调用时自动 spawn，无需常驻）
 # 2. 调用 HD（ACP 标准协议）
-<venv>/bin/python clients/acp-client.py "pnpm --dir <DSH_REPO> run dsh acp" "你的任务"
+<venv>/bin/python clients/acp-client.py "/home/li/.npm-global/bin/dsh acp" "你的任务"
 
 # 3. 调用 Hermes
 <venv>/bin/python clients/acp-client.py "hermes acp" "你的任务"
@@ -99,7 +99,7 @@ dsh --profile <名字> --dump-config                  # 验证层
 - **Hermes webhook 签名**：`X-Hub-Signature-256: sha256=<hmac>`（GitHub 风格），HMAC 用**订阅专属 secret**
 - **python 客户端**：必须用 Hermes venv 的解释器跑（默认 python3 与 pydantic_core 编译不匹配）
 - **DSH 插件 defineTool schema**：`parameters` 必须 `type:'object'` + `properties` + `required:[...]` 数组（`required:true` 在字段里会导致 INVALID_REQUEST）
-- **spawn 不走 shell**：命令用 `pnpm --dir <repo>`（不要 `cd &&`）
+- **spawn 不走 shell**：命令用 `dsh <repo>`（不要 `cd &&`）
 
 ## Token 成本优化（协作分级）
 

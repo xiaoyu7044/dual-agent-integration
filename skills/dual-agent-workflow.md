@@ -30,7 +30,7 @@ metadata:
 | 方向 | 方式 | 命令/工具 |
 |---|---|---|
 | Hermes → HD | headless CLI | `dsh --profile headless "任务"`（新会话，任务须自包含） |
-| HD → Hermes | `call_hermes` 工具 | HD 会话里调用（hermes-bridge 插件注册，`/home/li/~/.dsh/plugins/hermes-bridge/index.js`，execFile 调 `/home/li/.local/bin/hermes chat -q`） |
+| HD → Hermes | `call_hermes` 工具 | HD 会话里调用（hermes-bridge 插件注册，`~/.dsh/plugins/hermes-bridge/index.js`，execFile 调 `/home/li/.local/bin/hermes chat -q`） |
 | 记忆共享 | mem0（qdrant server 6333） | 双向读写同一集合 `hermes_mem0_lijiachuan`（123+ 条）；HD 侧 mem0 工具经 dai-mem0 预设（默认） |
 
 **服务**：HD = `dsh-web.service`（systemd 用户服务，3080，开机自启）；qdrant = `qdrant-server.service`（6333）。
@@ -46,14 +46,14 @@ metadata:
 ```
 
 接力规则：
-- 我改 → HD 测/审：`pnpm dsh --profile headless "按交接格式：..."`
+- 我改 → HD 测/审：`dsh --profile headless "按交接格式：..."`
 - HD 发现问题 → 派回我修：HD 用 `call_hermes` 把问题+上下文给我
 - 大项目：先写交接文档（/tmp/relay-<project>.md），两边按文档接力，避免口头传递丢信息
 
 ## 统一入口模式（#6）
 
 - **HD 当入口**（浏览器 3080）：用户在 HD 问网站/服务器/任何需要我执行的事 → HD 用 `call_hermes` 调我 → 我执行返回 → HD 整合给用户
-- **Hermes 当入口**（WeCom/本会话）：用户说"叫 HD 做 X" → 我 `pnpm dsh --profile headless` 派任务 → 取结果汇报
+- **Hermes 当入口**（WeCom/本会话）：用户说"叫 HD 做 X" → 我 `dsh --profile headless` 派任务 → 取结果汇报
 - **注意**：`hermes chat -q` 每次是独立新会话（无记忆），任务必须自包含；调用耗时 30s~10min，超时返回部分结果
 
 ## 值班分工（#5）
@@ -78,14 +78,14 @@ HD 是会话式（无定时机制），**不能独立巡更**——值班 = 我�
 
 ## ACP 程序化 API（方案 B——2026-08-15 落地，标准协议双向互通）
 
-- **HD 侧服务器**：`~/.npm-global/bin/dsh && dsh acp`（JSON-RPC stdio，needs key，无客户端连会自动退出）
+- **HD 侧服务器**：`~/.npm-global/bin/dsh acp`（JSON-RPC stdio，needs key，无客户端连会自动退出）
 - **Hermes 侧服务器**：`hermes acp`（ACP 模式，`--check` 验证依赖）
 - **客户端**（双向通用）：`python3 /home/li/acp-py-client.py "<服务器命令>" "<任务>"`——例：
-  - 调 HD：`python3 acp-py-client.py "/home/li/.npm-global/bin//home/li/.npm-global/bin/dsh acp" "任务"`
+  - 调 HD：`python3 acp-py-client.py "/home/li/.npm-global/bin/dsh acp" "任务"`
   - 调 Hermes：`python3 acp-py-client.py "hermes acp" "任务"`
   - Node 版备用：`/home/li/acp-client.js`
 - **协议要点**：ACP v0.11（python 库 `acp` 在 Hermes venv）；方法 `initialize`(protocolVersion=1) → `session/new`(cwd, mcpServers:[]) → `session/prompt`(sessionId, prompt:[{type:'text',text:...}])；**回复文本在 `session/update` 通知**（content 是 dict 或 pydantic 模型，非列表）；**PromptResponse 无 message 字段**
-- **坑**：spawn 不走 shell（`cd &&` 不行，用 `pnpm --dir`）；客户端需在 prompt 后 sleep 3s 收异步通知；`@anthropic-ai/acp-sdk` npm 镜像无此包（用 python acp 库或手写 Node）；**acp-py-client.py 必须用 venv 解释器跑**（`/home/li/.hermes/hermes-agent/venv/bin/python`——默认 python3 与 pydantic_core 编译不匹配报错）；**mem0 插件（HD 写的）defineTool schema 坑**：parameters 必须 `type:'object'` + `properties` + `required:[...]` 数组（HD 原来 `required:true` 在字段里 → INVALID_REQUEST 本轮失败，已修 `~/.dsh/.agent-presets/dai-mem0/mem0-plugin.mjs`）
+- **坑**：spawn 不走 shell（`cd &&` 不行；用绝对路径 `/home/li/.npm-global/bin/dsh acp`）；客户端需在 prompt 后 sleep 3s 收异步通知；`@anthropic-ai/acp-sdk` npm 镜像无此包（用 python acp 库或手写 Node）；**acp-py-client.py 必须用 venv 解释器跑**（`/home/li/.hermes/hermes-agent/venv/bin/python`——默认 python3 与 pydantic_core 编译不匹配报错）；**mem0 插件（HD 写的）defineTool schema 坑**：parameters 必须 `type:'object'` + `properties` + `required:[...]` 数组（HD 原来 `required:true` 在字段里 → INVALID_REQUEST 本轮失败，已修 `~/.dsh/.agent-presets/dai-mem0/mem0-plugin.mjs`）
 
 ## 踩坑记录
 

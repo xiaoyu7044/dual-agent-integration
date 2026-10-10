@@ -3,7 +3,7 @@
  * acp-client.js — 通用 ACP (Agent Client Protocol) 客户端
  * 用法: node acp-client.js "<spawn命令>" "<任务描述>"
  * 例:   node acp-client.js "hermes acp" "用一句话回复你好"
- *       node acp-client.js "pnpm --dir <DSH_REPO> run demo:acp" "任务..."
+ *       node acp-client.js "/home/li/.npm-global/bin/dsh acp" "任务..."
  * 协议: JSON-RPC 2.0 over stdio（ACP 标准）
  */
 import { spawn } from 'node:child_process'

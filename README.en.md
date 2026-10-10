@@ -57,7 +57,7 @@ dsh --profile <name> --dump-config                  # verify layer
 ```bash
 # 1. Start HD's ACP server (auto-spawned per client call, no daemon needed)
 # 2. Call HD (ACP standard protocol)
-<venv>/bin/python clients/acp-client.py "pnpm --dir <DSH_REPO> run dsh acp" "your task"
+<venv>/bin/python clients/acp-client.py "/home/li/.npm-global/bin/dsh acp" "your task"
 
 # 3. Call Hermes
 <venv>/bin/python clients/acp-client.py "hermes acp" "your task"
@@ -99,7 +99,7 @@ dsh --profile <name> --dump-config                  # verify layer
 - **Hermes webhook signing**: `X-Hub-Signature-256: sha256=<hmac>` (GitHub style), HMAC uses the **subscription-specific secret**
 - **Python client**: must run with Hermes venv's interpreter (system python3 mismatches pydantic_core builds)
 - **DSH plugin defineTool schema**: `parameters` must be `type:'object'` + `properties` + `required:[...]` array (`required:true` inside a field causes INVALID_REQUEST)
-- **spawn doesn't use a shell**: use `pnpm --dir <repo>` (not `cd &&`)
+- **spawn doesn't use a shell**: use `dsh <repo>` (not `cd &&`)
 
 ## Token Cost Optimization (Tiered Collaboration)
 
